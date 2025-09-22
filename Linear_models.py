@@ -147,3 +147,74 @@ ax.plot([low, high], [low, high], ls = "--", c = ".3", alpha = 0.5)
 ax.set_xlabel("OLS regression coefficients", fontweight = "bold")
 ax.set_ylabel("NNLS regression coefficients", fontweight = "bold")
 plt.show()
+
+## 1.1.2. Ridge regression and classification
+
+## Plot ridge coefficients as a function of the regularization
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn import linear_model
+
+# X is the 10x10 Hilbert matrix
+X = 1.0 / (np.arange(1, 11) + np.arange(0, 10)[:, np.newaxis])
+y = np.ones(10)
+np.set_printoptions(precision=3, suppress=True, linewidth=120)
+
+# Compute paths
+n_alphas = 200
+alphas = np.logspace(-10, -2, n_alphas)
+
+coefs = []
+for a in alphas:
+    ridge = linear_model.Ridge(alpha = a, fit_intercept = False)
+    ridge.fit(X, y)
+    coefs.append(ridge.coef_)
+
+# Display results
+ax = plt.gca()
+ax.plot(alphas, coefs)
+ax.set_xscale("log")
+ax.set_xlim(ax.get_xlim()[::-1])
+plt.xlabel("alpha")
+plt.ylabel("weights")
+plt.title("Ridge Coefficients vs Regularization Strength (alpha)")
+plt.axis("tight")
+plt.legend([f"Feature {i + 1}" for i in range(X.shape[1])], loc = "best", fontsize = "small")
+plt.show()
+
+## 1.1.2.1 Regression
+from sklearn import linear_model
+reg = linear_model.Ridge(alpha = .5)
+reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+reg.coef_
+reg.intercept_
+
+## Porównanie solverów (cholesky, sparse_cg)
+import time
+import numpy as np
+from sklearn.linear_model import Ridge
+from sklearn.datasets import make_regression
+
+# Funkcja pomocniczna do pomiaru czasu
+def benchmark_solver(solver, n_samples = 1000, n_features = 100):
+    X, y = make_regression(n_samples = n_samples, n_features = n_features, noise = 0.1)
+    model = Ridge(alpha = 1.0, solver = solver)
+    start = time.time()
+    model.fit(X, y)
+    end = time.time()
+    return end - start
+
+if __name__ == "__main__":
+    # mały zbiór danych
+    print("--- Mały zbiór danych (1000 próbek, 100 cech) ---")
+    for solver in ["cholesky", "sparse_cg"]:
+        t = benchmark_solver(solver, n_samples = 1000, n_features = 100)
+        print(f"Solver {solver:10s} czas: {t:.5f} s")
+
+    # Duży zbiór danych
+    print("\n--- Duży zbiór danych (100000 próbek, 1000 cech) ---")
+    for solver in ["cholesky", "sparse_cg"]:
+        t = benchmark_solver(solver, n_samples = 100000, n_features = 1000)
+        print(f"Solver {solver:10s} czas: {t:.5f} s")
