@@ -218,3 +218,41 @@ if __name__ == "__main__":
     for solver in ["cholesky", "sparse_cg"]:
         t = benchmark_solver(solver, n_samples = 100000, n_features = 1000)
         print(f"Solver {solver:10s} czas: {t:.5f} s")
+
+
+### Common pitfalls in the interpretation of coefficients of linear models
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy as sp
+import seaborn as sns
+
+# The dataset: wages
+from sklearn.datasets import fetch_openml
+iris = fetch_openml(name="iris", as_frame=True)
+print(iris.frame.head())
+
+from sklearn.datasets import fetch_openml
+survey = fetch_openml(data_id = 534, as_frame = True)
+print(survey.DESCR[:500])
+print(survey.frame.head())
+
+X = survey.data[survey.feature_names]
+X.describe(include = "all")
+X.head()
+
+y = survey.target.values.ravel()
+survey.target.head()
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 42)
+
+train_dataset = X_train.copy()
+train_dataset.insert(0, "WAGE", y_train)
+_ = sns.pairplot(train_dataset, kind = "reg", diag_kind = "kde")
+plt.show()
+
+# The machine-learning pipeline
+survey.data.info()
