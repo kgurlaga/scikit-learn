@@ -256,3 +256,88 @@ plt.show()
 
 # The machine-learning pipeline
 survey.data.info()
+
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import OneHotEncoder
+
+categorical_columns = ["RACE", "OCCUPATION", "SECTOR", "MARR", "UNION", "SEX", "SOUTH"]
+numerical_columns = ["EDUCATION", "EXPERIENCE", "AGE"]
+
+preprocessor = make_column_transformer(
+    (OneHotEncoder(drop = "if_binary"), categorical_columns),
+    remainder = "passthrough",
+    verbose_feature_names_out = False,
+)
+
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
+
+model = make_pipeline(
+    preprocessor,
+    TransformedTargetRegressor(
+        regressor = Ridge(alpha = 1e-10), func = np.log10, inverse_func = sp.special.exp10,
+    )
+)
+
+# Processing the dataset
+model.fit(X_train, y_train)
+
+from sklearn.metrics import PredictionErrorDisplay, median_absolute_error
+
+mae_train = median_absolute_error(y_train, model.predict(X_train))
+y_pred = model.predict(X_test)
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MadAE on testing set": f"{mae_test:.2f} $/hour",
+}
+
+_, ax = plt.subplots(figsize = (5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind = "actual_vs_predicted", ax = ax, scatter_kwargs = {"alpha": 0.5}
+)
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label = f"{name}: {score}")
+ax.legend(loc = "upper left")
+plt.tight_layout()
+plt.show()
+
+# Interpreting coefficients: scale matters
+feature_names = model[:-1].get_feature_names_out()
+
+coefs = pd.DataFrame(
+    model[-1].regressor_.coef_,
+    columns = ["Coeffcients"],
+    index = feature_names,
+)
+
+coefs.plot.barh(figsize = (9, 7))
+plt.title("Ridge model, small regularization")
+plt.axvline(x = 0, color = ".5")
+plt.xlabel("Raw coefficient values")
+plt.subplots_adjust(left = 0.3)
+plt.show()
+
+X_train_preprocessed = pd.DataFrame(
+    model[:-1].transform(X_train), columns = feature_names
+)
+
+X_train_preprocessed.std(axis = 0).plot.barh(figsize = (9, 7))
+plt.title("Feature ranges")
+plt.xlabel("Std. dev. of feature values")
+plt.subplots_adjust(left = 0.3)
+plt.show()
+
+coefs = pd.DataFrame(
+    model[-1].regressor_.coef_ * X_train_preprocessed.std(axis = 0),
+    columns = ["Coefficient importance"],
+    index = feature_names,
+)
+coefs.plot(kind = "barh", figsize = (9, 7))
+plt.xlabel("Coefficient values corrected by the feature's std. dev.")
+plt.title("Ridge model, small regularization")
+plt.axvline(x = 0, color = ".5")
+plt.subplots_adjust(left = 0.3)
+plt.show()
