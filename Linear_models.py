@@ -341,3 +341,29 @@ plt.title("Ridge model, small regularization")
 plt.axvline(x = 0, color = ".5")
 plt.subplots_adjust(left = 0.3)
 plt.show()
+
+# Checking the variability of the coefficients
+from sklearn.model_selection import RepeatedKFold, cross_validate
+
+cv = RepeatedKFold(n_splits = 5, n_repeats = 5, random_state = 0)
+cv_model = cross_validate(
+    model, X, y, cv = cv, return_estimator = True, n_jobs= 2,
+)
+
+coefs = pd.DataFrame(
+    [
+        est[-1].regressor_.coef_ * est[:-1].transform(X.iloc[train_idx]).std(axis = 0)
+        for est, (train_idx, _) in zip(cv_model["estimator"], cv.split(X, y))
+    ],
+    columns = feature_names,
+)
+
+plt.figure(figsize = (9, 7))
+sns.stripplot(data = coefs, orient = "h", palette = "dark:k", alpha = 0.5)
+sns.boxplot(data =coefs, orient = "h", color = "cyan", saturation = 0.5, whis = 10)
+plt.axvline(x = 0, color = ".5")
+plt.xlabel("Coefficient importance")
+plt.title("Coefficient importance and its variability")
+plt.suptitle("Ridge model, small regularization")
+plt.subplots_adjust(left = 0.3)
+plt.show()
