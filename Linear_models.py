@@ -463,3 +463,64 @@ plt.axvline(x = 0, color = ".5")
 plt.title("Coefficient variability")
 plt.subplots_adjust(left = 0.3)
 plt.show()
+
+# Linear models with regularization
+from sklearn.linear_model import RidgeCV
+
+alphas = np.logspace(-10, 10, 21)
+model = make_pipeline(
+    preprocessor, TransformedTargetRegressor(
+        regressor = RidgeCV(alphas = alphas), func = np.log10, inverse_func = sp.special.exp10,
+    ),
+)
+model.fit(X_train, y_train)
+
+model[-1].regressor_.alpha_
+
+mae_train = median_absolute_error(y_train, model.predict(X_train))
+y_pred = model.predict(X_test)
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
+
+_, ax = plt.subplots(figsize = (5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind = "actual_vs_predicted", ax = ax, scatter_kwargs = {"alpha": 0.5}
+)
+ax.set_title("Ridge model, optimum regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label = f"{name}: {score}")
+ax.legend(loc = "upper left")
+plt.tight_layout()
+plt.show()
+
+coefs = pd.DataFrame(
+    model[-1].regressor_.coef_,
+    columns = ["Coefficients importance"],
+    index = feature_names,
+)
+coefs.plot.barh(figsize = (9, 7))
+plt.title("Ridge model, with regularization, normalized variables")
+plt.xlabel("Raw coefficients values")
+plt.axvline(x = 0, color = ".5")
+plt.subplots_adjust(left = 0.3)
+plt.show()
+
+
+cv_model = cross_validate(
+    model, X, y, cv = cv, return_estimator = True, n_jobs = 2,
+)
+coefs = pd.DataFrame(
+    [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns = feature_names
+)
+
+plt.ylabel("Age coefficient")
+plt.xlabel("Experience coefficient")
+plt.grid(True)
+plt.xlim(-0.4, 0.5)
+plt.ylim(-0.4, 0.5)
+plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+_ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
+plt.show()
