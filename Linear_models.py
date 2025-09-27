@@ -367,3 +367,41 @@ plt.title("Coefficient importance and its variability")
 plt.suptitle("Ridge model, small regularization")
 plt.subplots_adjust(left = 0.3)
 plt.show()
+
+# The problem of correlated variables
+plt.ylabel("Age coefficient")
+plt.xlabel("Experience coefficient")
+plt.grid(True)
+plt.xlim(-0.4, 0.5)
+plt.ylim(-0.4, 0.5)
+plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+_ = plt.title("Co-variations of coefficients for AGE and EXPERIENCE across folds")
+plt.show()
+
+
+column_to_drop = ["AGE"]
+cv_model = cross_validate(
+    model, X.drop(columns = column_to_drop),
+    y,
+    cv = cv,
+    return_estimator = True,
+    n_jobs = 2,
+)
+
+coefs = pd.DataFrame(
+    [
+    est[-1].regressor_.coef_ * est[:-1].transform(X.drop(columns = column_to_drop).iloc[train_idx]).std(axis = 0)
+    for est, (train_idx, _) in zip(cv_model["estimator"], cv.split(X, y))
+    ],
+    columns = feature_names[:-1],
+)
+
+plt.figure(figsize = (9, 7))
+sns.stripplot(data = coefs, orient = "h", palette = "dark:k", alpha = 0.5)
+sns.boxplot(data = coefs, orient = "h", color = "cyan", saturation = 0.5)
+plt.axvline(x = 0, color = ".5")
+plt.title("Coefficient importance and its variability")
+plt.xlabel("Coefficient importance")
+plt.suptitle("Ridge model, small regularization, AGE dropped")
+plt.subplots_adjust(left = 0.3)
+plt.show()
