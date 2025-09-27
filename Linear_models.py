@@ -405,3 +405,61 @@ plt.xlabel("Coefficient importance")
 plt.suptitle("Ridge model, small regularization, AGE dropped")
 plt.subplots_adjust(left = 0.3)
 plt.show()
+
+# Preprocessing numerical variables
+from sklearn.preprocessing import StandardScaler
+preprocessor = make_column_transformer(
+    (OneHotEncoder(drop="if_binary"), categorical_columns),
+    (StandardScaler(), numerical_columns),
+)
+
+model = make_pipeline(
+    preprocessor, TransformedTargetRegressor(regressor = Ridge(alpha = 1e-10), func = np.log10, inverse_func = sp.special.exp10),
+)
+model.fit(X_train, y_train)
+
+mae_train = median_absolute_error(y_train, model.predict(X_train))
+y_pred = model.predict(X_test)
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
+
+_, ax = plt.subplots(figsize = (5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind = "actual_vs_predicted", ax = ax, scatter_kwargs = {"alpha": 0.5}
+)
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label = f"{name}: {score}")
+ax.legend(loc = "upper left")
+plt.tight_layout()
+plt.show()
+
+coefs = pd.DataFrame(
+    model[-1].regressor_.coef_,
+    columns = ["Coefficients importance"],
+    index = feature_names,
+)
+coefs.plot.barh(figsize = (9, 7))
+plt.title("Ridge model, small regularization, normalized variables")
+plt.xlabel("Raw coefficien values")
+plt.axvline(x = 0, color = ".5")
+plt.subplots_adjust(left = 0.3)
+plt.show()
+
+cv_model = cross_validate(
+    model, X, y, cv = cv, return_estimator = True, n_jobs = 2,
+)
+coefs = pd.DataFrame(
+    [est[-1].regressor_.coef_ for est in cv_model["estimator"]], columns = feature_names
+)
+
+plt.figure(figsize = (9, 7))
+sns.stripplot(data = coefs, orient = "h", palette = "dark:k", alpha = 0.5)
+sns.boxplot(data = coefs, orient = "h", color = "cyan", saturation = 0.5, whis = 10)
+plt.axvline(x = 0, color = ".5")
+plt.title("Coefficient variability")
+plt.subplots_adjust(left = 0.3)
+plt.show()
