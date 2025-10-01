@@ -1,3 +1,12 @@
+low_x, high_x = ax.get_xlim()
+low_y, high_y = ax.get_ylim()
+low = max(low_x, low_y)
+high = min(high_x, high_y)
+ax.plot([low, high], [low, high], ls = "--", c = ".3", alpha = 0.5)
+ax.set_xlabel("OLS regression coefficients", fontweight = "bold")
+ax.set_ylabel("NNLS regression coefficients", fontweight = "bold")
+plt.show()
+
 ## 1.1.1. Ordinary Least Squere
 from sklearn import linear_model
 import numpy as np
@@ -47,4 +56,12 @@ if __name__ == "__main__":
     for solver in ["cholesky", "sparse_cg"]:
         t = benchmark_solver(solver, n_samples = 100000, n_features = 1000)
         print(f"Solver {solver:10s} czas: {t:.5f} s")
+
+
+# Setting the regularization parameter: leave-one-out Cross-Validation
+import numpy as np
+from sklearn import linear_model
+reg = linear_model.RidgeCV(alphas = np.logspace(-6, 6, 13))
+reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+reg.alpha_
 
