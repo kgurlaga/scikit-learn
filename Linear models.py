@@ -65,3 +65,8 @@ reg = linear_model.RidgeCV(alphas = np.logspace(-6, 6, 13))
 reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
 reg.alpha_
 
+## LASSO
+from sklearn import linear_model
+reg = linear_model.Lasso(alpha = 0.1)
+reg.fit([[0, 0], [1, 1]], [0, 1])
+reg.predict([[1, 1]])
