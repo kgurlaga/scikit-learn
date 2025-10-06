@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 low_x, high_x = ax.get_xlim()
 low_y, high_y = ax.get_ylim()
 low = max(low_x, low_y)
