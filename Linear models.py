@@ -71,3 +71,7 @@ from sklearn import linear_model
 reg = linear_model.Lasso(alpha = 0.1)
 reg.fit([[0, 0], [1, 1]], [0, 1])
 reg.predict([[1, 1]])
+
+# AIC and BIC criteria
+
+## Multi-task Lasso
