@@ -77,3 +77,13 @@ reg.predict([[1, 1]])
 ## Multi-task Lasso
 
 ## Elastic-Net
+
+## Multi-task Elastic-Net
+
+## LARS
+from sklearn import linear_model
+reg = linear_model.LassoLars(alpha = .1)
+reg.fit([[0, 0], [1, 1]], [0, 1])
+reg.coef_
+
+## Orthogonal Matching Pursuit (OMP)
