@@ -87,3 +87,12 @@ reg.fit([[0, 0], [1, 1]], [0, 1])
 reg.coef_
 
 ## Orthogonal Matching Pursuit (OMP)
+## Bayesian Regression
+## Bayesian Ridge Regression
+from sklearn import linear_model
+X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
+Y = [0., 1., 2., 3.]
+reg = linear_model.BayesianRidge()
+reg.fit(X, Y)
+reg.predict([[1, 0.]])
+reg.coef_
