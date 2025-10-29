@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
-low_x, high_x = ax.get_xlim()
-low_y, high_y = ax.get_ylim()
+low_x, high_x = ax.get_xlim() # type: ignore
+low_y, high_y = ax.get_ylim() # type: ignore
 low = max(low_x, low_y)
 high = min(high_x, high_y)
-ax.plot([low, high], [low, high], ls = "--", c = ".3", alpha = 0.5)
-ax.set_xlabel("OLS regression coefficients", fontweight = "bold")
-ax.set_ylabel("NNLS regression coefficients", fontweight = "bold")
+ax.plot([low, high], [low, high], ls = "--", c = ".3", alpha = 0.5) # type: ignore
+ax.set_xlabel("OLS regression coefficients", fontweight = "bold") # type: ignore
+ax.set_ylabel("NNLS regression coefficients", fontweight = "bold") # type: ignore
 plt.show()
 
 ## 1.1.1. Ordinary Least Squere
