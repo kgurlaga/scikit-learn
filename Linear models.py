@@ -96,3 +96,5 @@ reg = linear_model.BayesianRidge()
 reg.fit(X, Y)
 reg.predict([[1, 0.]])
 reg.coef_
+
+## Automatic Relevance Determination - ARD
