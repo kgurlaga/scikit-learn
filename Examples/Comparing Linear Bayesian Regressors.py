@@ -62,3 +62,65 @@ plt.xlim(1, 30)
 plt.legend()
 _ = plt.title("Models log-likelihood")
 plt.show()
+
+## Bayesian regressions with polynomial feature expansion
+# Generate synthetic dataset
+
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+rng = np.random.RandomState(0)
+n_samples = 110
+
+# sort the data to make plotting easier later
+X = np.sort(-10 * rng.rand(n_samples) + 10)
+noise = rng.normal(0, 1, n_samples) * 1.35
+y = np.sqrt(X) * np.sin(X) + noise
+full_data = pd.DataFrame({"input_feature": X, "target": y})
+X = X.reshape((-1, 1))
+
+# extrapolation
+X_plot = np.linspace(10, 10.4, 10)
+y_plot = np.sqrt(X_plot) *np.sin(X_plot)
+X_plot = np.concatenate((X, X_plot.reshape((-1, 1))))
+y_plot = np.concatenate((y - noise, y_plot))
+
+# Fit the regressors
+ard_poly = make_pipeline(
+    PolynomialFeatures(degree = 10, include_bias = False),
+    StandardScaler(),
+    ARDRegression(),
+).fit(X, y)
+brr_poly = make_pipeline(
+    PolynomialFeatures(degree = 10, include_bias = False),
+    StandardScaler(),
+    BayesianRidge(),
+).fit(X, y)
+
+y_ard, y_ard_std = ard_poly.predict(X_plot, return_std = True)
+y_brr,y_brr_std = brr_poly.predict(X_plot, return_std  = True)
+
+# Plotting polynomial regressions with std errors of the scores
+ax = sns.scatterplot(
+    data = full_data, x = "input_feature", y = "target", color = "black", alpha = 0.75
+)
+ax.plot(X_plot, y_plot, color = "black", label = "Ground Truth")
+ax.plot(X_plot, y_brr, color = "red", label = "BayesianRidge with polynomial features")
+ax.plot(X_plot, y_ard, color = "navy", label = "ARD with polynomial features")
+ax.fill_between(
+    X_plot.ravel(),
+    y_ard - y_ard_std,
+    y_ard + y_ard_std,
+    color = "navy",
+    alpha = 0.3,
+)
+ax.fill_between(
+    X_plot.ravel(),
+    y_brr - y_brr_std,
+    y_brr + y_brr_std,
+    color = "red",
+    alpha = 0.3,
+)
+ax.legend()
+_ = ax.set_title("Polynomial fit of a non-linear feature")
+plt.show()
