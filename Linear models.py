@@ -98,3 +98,5 @@ reg.predict([[1, 0.]])
 reg.coef_
 
 ## Automatic Relevance Determination - ARD
+
+## Logistic regression
