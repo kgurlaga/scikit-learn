@@ -121,3 +121,32 @@ def score_estimator(estimator,df_test):
 print("Constant mean frequency evaluation:")
 score_estimator(dummy, df_test)
 
+## Generalized linear models
+from sklearn.linear_model import Ridge
+
+ridge_glm = Pipeline(
+    [
+        ("preprocessor", linear_model_preprocessor),
+        ("regressor", Ridge(alpha=1e-6)),
+    ]
+).fit(df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"])
+
+print("Ridge evaluation:")
+score_estimator(ridge_glm, df_test)
+
+
+from sklearn.linear_model import PoissonRegressor
+n_samples = df_train.shape[0]
+
+poisson_glm = Pipeline(
+    [
+        ("preprocessor", linear_model_preprocessor),
+        ("regressor", PoissonRegressor(alpha=1e-12, solver="newton-cholesky")),
+    ]
+)
+poisson_glm.fit(
+    df_train, df_train["Frequency"], regressor__sample_weight=df_train["Exposure"]
+)
+
+print("PoissonRegressor evaluation:")
+score_estimator(poisson_glm, df_test)
