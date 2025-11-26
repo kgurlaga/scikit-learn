@@ -150,3 +150,61 @@ poisson_glm.fit(
 
 print("PoissonRegressor evaluation:")
 score_estimator(poisson_glm, df_test)
+
+## Gradient Boosting Regression Trees for Poisson regression
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.preprocessing import OrdinalEncoder
+
+tree_preprocessor = ColumnTransformer(
+    [
+        (
+            "categorical",
+            OrdinalEncoder(),
+            ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
+        ),
+        ("numeric", "passthrough", ["VehAge", "DrivAge", "BonusMalus", "Density"]),
+    ],
+    remainder="drop",
+)
+poisson_gbrt = Pipeline(
+    [
+        ("preprocessor", tree_preprocessor),
+        (
+            "regressor",
+            HistGradientBoostingRegressor(loss="poisson", max_leaf_nodes=128),
+        ),
+    ]
+)
+poisson_gbrt.fit(
+    df_train, df_train["Frequency"], regressor__sample_weight = df_train["Exposure"]
+)
+
+print("Poisson Gradient Boosted Trees evaluation:")
+score_estimator(poisson_gbrt, df_test)
+
+# Comparison
+fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(16, 6), sharey=True)
+fig.subplots_adjust(bottom=0.2)
+n_bins = 20
+for row_idx, label, df in zip(range(2), ["train", "test"], [df_train, df_test]):
+    df["Frequency"].hist(bins=np.linspace(-1, 30, n_bins), ax=axes[row_idx, 0])
+
+    axes[row_idx, 0].set_title("Data")
+    axes[row_idx, 0].set_yscale("log")
+    axes[row_idx, 0].set_xlabel("y (observed Frequency)")
+    axes[row_idx, 0].set_ylim([1e1, 5e5])
+    axes[row_idx, 0].set_ylabel(label + " samples")
+
+    for idx, model in enumerate([ridge_glm, poisson_glm, poisson_gbrt]):
+        y_pred = model.predict(df)
+
+        pd.Series(y_pred).hist(
+            bins=np.linspace(-1, 4, n_bins), ax=axes[row_idx, idx + 1]
+        )
+        axes[row_idx, idx + 1].set(
+            title=model[-1].__class__.__name__,
+            yscale="log",
+            xlabel="y_pred (predicted expected Frequency)",
+        )
+plt.tight_layout()
+plt.show()
