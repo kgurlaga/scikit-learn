@@ -277,3 +277,50 @@ for axi, model in zip(ax.ravel(), [ridge_glm, poisson_glm, poisson_gbrt, dummy])
     axi.legend()
 plt.tight_layout()
 plt.show()
+
+## Evaluation of the ranking power
+
+from sklearn.metrics import auc
+
+def lorenz_curve(y_true, y_pred, exposure):
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    exposure = np.asarray(exposure)
+
+    # order samples by increasing predicted risk:
+    ranking = np.argsort(y_pred)
+    ranked_frequencies = y_true[ranking]
+    ranked_exposure = exposure[ranking]
+    cumulated_claims = np.cumsum(ranked_frequencies * ranked_exposure)
+    cumulated_claims /= cumulated_claims[-1]
+    cumulated_exposure = np.cumsum(ranked_exposure)
+    cumulated_exposure /= cumulated_exposure[-1]
+    return cumulated_exposure, cumulated_claims
+
+fig, ax = plt.subplots(figsize=(8, 8))
+
+for model in [dummy, ridge_glm, poisson_glm, poisson_gbrt]:
+    y_pred = model.predict(df_test)
+    cum_exposure, cum_claims = lorenz_curve(
+        df_test["Frequency"], y_pred, df_test["Exposure"]
+    )
+    gini = 1 - 2 * auc(cum_exposure, cum_claims)
+    label = "{} (Gini: {:.2f})".format(model[-1], gini)
+    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
+
+# Oracle model: y_pred == y_test
+cum_exposure, cum_claims = lorenz_curve(
+    df_test["Frequency"], df_test["Frequency"], df_test["Exposure"]
+)
+gini = 1 - 2 * auc(cum_exposure, cum_claims)
+label = "Oracle (Gini: {:.2f})".format(gini)
+ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
+
+# Random Baseline
+ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
+ax.set(
+    title="Lorenz curves by model",
+    xlabel="Cumulative proportion of exposure (from safest to riskiest)",
+    ylabel="Cumulative proportion of claims",
+)
+ax.legend(loc="upper left")
+plt.show()
