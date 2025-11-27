@@ -208,3 +208,72 @@ for row_idx, label, df in zip(range(2), ["train", "test"], [df_train, df_test]):
         )
 plt.tight_layout()
 plt.show()
+
+
+## Evaluation of the calibration of predictions
+from sklearn.utils import gen_even_slices
+
+def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None, n_bins=100):
+    """Compare predictions and observations for bins ordered by y_pred.
+    
+    We order the samples by ``y_pred`` and split it in bins.
+    In each bin the observed mean is compared with the predicted mean.
+
+    Parameters
+    ----------
+    y_true: array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+    y_pred: array-like of shape (n_samples,)
+        Estimated target values.
+    sample_weight: array-like of shape (n_samples,)
+        Sample weights.
+    n_bins: int
+        Number of bins to use.
+    
+    Returns
+    -------
+    bin_centers: ndarray of shape (n_bins,)
+        bin_centers
+    y_true_bin: ndarray of shape (n_bins,)
+        average y_pred for each bin
+    y_pred_bin: ndarray of shape (n_bins,)
+        average y_pred for each bin
+    """
+    idx_sort = np.argsort(y_pred)
+    bin_centers = np.arange(0, 1, 1 / n_bins) + 0.5 / n_bins
+    y_pred_bin = np.zeros(n_bins)
+    y_true_bin = np.zeros(n_bins)
+
+    for n, sl in enumerate(gen_even_slices(len(y_true), n_bins)):
+        weights = sample_weight[idx_sort][sl]
+        y_pred_bin[n] = np.average(y_pred[idx_sort][sl], weights=weights)
+        y_true_bin[n] = np.average(y_true[idx_sort][sl], weights=weights)
+    return bin_centers, y_true_bin, y_pred_bin
+
+print(f"Actual number of claims: {df_test['ClaimNb'].sum()}")
+fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+plt.subplots_adjust(wspace=0.3)
+
+for axi, model in zip(ax.ravel(), [ridge_glm, poisson_glm, poisson_gbrt, dummy]):
+    y_pred = model.predict(df_test)
+    y_true = df_test["Frequency"].values
+    exposure = df_test["Exposure"].values
+    q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
+        y_true, y_pred, sample_weight=exposure, n_bins=10
+    )
+
+    # Name of the model after the estimator used in the last step of the pipeline.
+    print(f"Predicted number of claims by {model[-1]}: {np.sum(y_pred * exposure):.1f}")
+
+    axi.plot(q, y_pred_seg, marker="x", linestyle="--", label="predictions")
+    axi.plot(q, y_true_seg, marker="o", linestyle="--", label="observations")
+    axi.set_xlim(0, 1.0)
+    axi.set_ylim(0, 0.5)
+    axi.set(
+        title=model[-1],
+        xlabel="Fraction of samples sorted by y_pred",
+        ylabel="Mean Frequency (y_pred)",
+    )
+    axi.legend()
+plt.tight_layout()
+plt.show()
