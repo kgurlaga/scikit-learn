@@ -155,3 +155,57 @@ def score_estimator(
         .loc[:, ["train", "test"]]
     )
     return res
+
+## Loading datasets, basic feature extraction and target definitions
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import (
+    FunctionTransformer,
+    KBinsDiscretizer,
+    OneHotEncoder,
+    StandardScaler,
+)
+
+df = load_mtpl2()
+
+# Correct for unreasonable observations (that might be data error) and a few exceptionally large claim amounts
+df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
+df["Exposure"] = df["Exposure"].clip(upper=1)
+df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
+# If the claim amount is 0, then we do not count it as a claim. The loss function used by severity model needs strictly positive claim amounts. This way frequency and severity are more consistent with each other.
+df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
+
+log_scale_transformer = make_pipeline(
+    FunctionTransformer(func=np.log), StandardScaler()
+)
+
+column_trans = ColumnTransformer(
+    [
+        (
+            "binned_numeric",
+            KBinsDiscretizer(
+                n_bins=10, quantile_method="averaged_inverted_cdf", random_state=0
+            ),
+            ["VehAge", "DrivAge"],
+        ),
+        (
+            "onehot_categorical",
+            OneHotEncoder(),
+            ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
+        ),
+        ("passthrough_numeric", "passthrough", ["BonusMalus"]),
+        ("log_scaled_numeric", log_scale_transformer, ["Density"]),
+    ],
+    remainder="drop",
+)
+X = column_trans.fit_transform(df)
+
+# Insurances companies are interested in modeling the Pure Premium, that is the expected total claim amount per unit of exposure for each policyholder in their portfolio:
+df["PurePremium"] = df["ClaimAmount"] / df["Exposure"]
+
+# This can be indirectly approximated by a 2-setp modeling: the product of the frequency times the average claim amount per claim:
+df["Frequency"] = df["ClaimNb"] / df["Exposure"]
+df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
+
+with pd.option_context("display.max_columns", 15):
+    print(df[df.ClaimAmount > 0].head())
