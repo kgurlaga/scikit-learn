@@ -282,3 +282,95 @@ plot_obs_pred(
     fill_legend=True,
 )
 plt.show()
+
+## Severity Model - Gamma distribution
+from sklearn.linear_model import GammaRegressor
+
+mask_train = df_train["ClaimAmount"] > 0
+mask_test = df_test["ClaimAmount"] > 0
+
+glm_sev = GammaRegressor(alpha=10.0, solver="newton-cholesky")
+
+glm_sev.fit(
+    X_train[mask_train.values],
+    df_train.loc[mask_train, "AvgClaimAmount"],
+    sample_weight=df_train.loc[mask_train, "ClaimNb"],
+)
+
+scores = score_estimator(
+    glm_sev,
+    X_train[mask_train.values],
+    X_test[mask_test.values],
+    df_train[mask_train],
+    df_test[mask_test],
+    target="AvgClaimAmount",
+    weights="ClaimNb",
+)
+print("Evaluation of GammaRegressor on target AvgClaimAmount")
+print(scores)
+
+from sklearn.dummy import DummyRegressor
+
+dummy_sev = DummyRegressor(strategy="mean")
+dummy_sev.fit(
+    X_train[mask_train.values],
+    df_train.loc[mask_train, "AvgClaimAmount"],
+    sample_weight=df_train.loc[mask_train, "ClaimNb"],
+)
+
+scores = score_estimator(
+    dummy_sev,
+    X_train[mask_train.values],
+    X_test[mask_test.values],
+    df_train[mask_train],
+    df_test[mask_test],
+    target="AvgClaimAmount",
+    weights="ClaimNb",
+)
+print("Evaluation of a mean predictor on target AvgClaimAmount")
+print(scores)
+
+print(
+    "Mean AvgClaim Amount per policy:              %.2f "
+    % df_train["AvgClaimAmount"].mean()
+)
+print(
+    "Mean AvgClaim Amount | NbClaim > 0:           %.2f"
+    % df_train["AvgClaimAmount"][df_train["AvgClaimAmount"] > 0].mean()
+)
+print(
+    "Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
+    % glm_sev.predict(X_train).mean()
+)
+print(
+    "Predicted Mean AvgClaim Amount (dummy) | NbClaim > 0: %.2f"
+    % dummy_sev.predict(X_train).mean()
+)
+
+
+fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(16, 6))
+
+plot_obs_pred(
+    df=df_train.loc[mask_train],
+    feature="DrivAge",
+    weight="Exposure",
+    observed="AvgClaimAmount",
+    predicted=glm_sev.predict(X_train[mask_train.values]),
+    y_label="Average Claim Severity",
+    title="train data",
+    ax=ax[0],
+)
+
+plot_obs_pred(
+    df=df_test.loc[mask_test],
+    feature="DrivAge",
+    weight="Exposure",
+    observed="AvgClaimAmount",
+    predicted=glm_sev.predict(X_test[mask_test.values]),
+    y_label="Average Claim Severity",
+    title="test data",
+    ax=ax[1],
+    fill_legend=True,
+)
+plt.tight_layout()
+plt.show()
