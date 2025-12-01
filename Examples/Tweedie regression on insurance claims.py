@@ -209,3 +209,76 @@ df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
 
 with pd.option_context("display.max_columns", 15):
     print(df[df.ClaimAmount > 0].head())
+
+## Frequency model - Poisson distribution
+from sklearn.linear_model import PoissonRegressor
+from sklearn.model_selection import train_test_split
+
+df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
+
+
+glm_freq = PoissonRegressor(alpha=1e-4, solver="newton-cholesky")
+glm_freq.fit(X_train, df_train["Frequency"], sample_weight=df_train["Exposure"])
+
+scores = score_estimator(
+    glm_freq,
+    X_train,
+    X_test,
+    df_train,
+    df_test,
+    target="Frequency",
+    weights="Exposure",
+)
+print("Evaluation of PoissonRegressor on target Frequency")
+print(scores)
+
+fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(16, 8))
+fig.subplots_adjust(hspace=0.3, wspace=0.2)
+
+plot_obs_pred(
+    df=df_train,
+    feature="DrivAge",
+    weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_train),
+    y_label="Claim Frequency",
+    title="train data",
+    ax=ax[0, 0],
+)
+
+plot_obs_pred(
+    df=df_test,
+    feature="DrivAge",
+    weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_test),
+    y_label="Claim Frequency",
+    title="test data",
+    ax=ax[0, 1],
+    fill_legend=True,
+)
+
+plot_obs_pred(
+    df=df_test,
+    feature="VehAge",
+    weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_test),
+    y_label="Claim Frequency",
+    title="test data",
+    ax=ax[1, 0],
+    fill_legend=True,
+)
+
+plot_obs_pred(
+    df=df_test,
+    feature="BonusMalus",
+    weight="Exposure",
+    observed="Frequency",
+    predicted=glm_freq.predict(X_test),
+    y_label="Claim Frequency",
+    title="test data",
+    ax=ax[1, 1],
+    fill_legend=True,
+)
+plt.show()
