@@ -374,3 +374,118 @@ plot_obs_pred(
 )
 plt.tight_layout()
 plt.show()
+
+## Pure Premium Modeling via a Product Model vs single TweedieRegressor
+from sklearn.linear_model import TweedieRegressor
+
+glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, solver="newton-cholesky")
+glm_pure_premium.fit(
+    X_train, df_train["PurePremium"], sample_weight=df_train["Exposure"]
+)
+
+tweedie_powers = [1.5, 1.7, 1.8, 1.9, 1.99, 1.999, 1.9999]
+scores_product_model = score_estimator(
+    (glm_freq, glm_sev),
+    X_train,
+    X_test,
+    df_train,
+    df_test,
+    target="PurePremium",
+    weights="Exposure",
+    tweedie_powers=tweedie_powers,
+)
+
+scores_glm_pure_premium = score_estimator(
+    glm_pure_premium,
+    X_train,
+    X_test,
+    df_train,
+    df_test,
+    target="PurePremium",
+    weights="Exposure",
+    tweedie_powers=tweedie_powers,
+)
+
+scores = pd.concat(
+    [scores_product_model, scores_glm_pure_premium],
+    axis=1,
+    sort=True,
+    keys=("Product Model", "TweedieRegressor"),
+)
+print("Evaluation of the Product Model and the Tweedie Regressor on target PurePremium")
+with pd.option_context("display.expand_frame_repr", False):
+    print(scores)
+
+
+res = []
+for subset_label, X, df in [
+    ("train", X_train, df_train),
+    ("test", X_test, df_test),
+]:
+    exposure = df["Exposure"].values
+    res.append(
+        {
+            "subset": subset_label,
+            "observed": df["ClaimAmount"].values.sum(),
+            "predicted, frequency*severity model": np.sum(
+                exposure * glm_freq.predict(X) * glm_sev.predict(X)
+            ),
+            "predicted, tweedie, power=%.2f" % glm_pure_premium.power: np.sum(
+                exposure * glm_pure_premium.predict(X)
+            ),
+        }
+    )
+
+print(pd.DataFrame(res).set_index("subset").T)
+
+from sklearn.metrics import auc
+
+def lorenz_curve(y_true, y_pred, exposure):
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    exposure = np.asarray(exposure)
+
+    # order samples by increasing predicted risk:
+    ranking = np.argsort(y_pred)
+    ranked_exposure = exposure[ranking]
+    ranked_pure_premium = y_true[ranking]
+    cumulative_claim_amount = np.cumsum(ranked_pure_premium * ranked_exposure)
+    cumulative_claim_amount /= cumulative_claim_amount[-1]
+    cumulative_exposure = np.cumsum(ranked_exposure)
+    cumulative_exposure /= cumulative_exposure[-1]
+    return cumulative_exposure, cumulative_claim_amount
+
+fig, ax = plt.subplots(figsize=(8, 8))
+y_pred_product = glm_freq.predict(X_test) * glm_sev.predict(X_test)
+y_pred_total = glm_pure_premium.predict(X_test)
+
+for label, y_pred in [
+    ("Frequency * Severity model", y_pred_product),
+    ("Compound Poisson Gamma", y_pred_total),
+]:
+    cum_exposure, cum_claims = lorenz_curve(
+        df_test["PurePremium"], y_pred, df_test["Exposure"]
+    )
+    gini = 1 - 2 * auc(cum_exposure, cum_claims)
+    label += " (Gini index: {:.3f})".format(gini)
+    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
+
+# Oracle model: y_pred == y_test
+cum_exposure, cum_claims = lorenz_curve(
+    df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"]
+)
+gini = 1 - 2 * auc(cum_exposure, cum_claims)
+label = "Oracle (Gini index: {:.3f})".format(gini)
+ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
+
+# Random baseline
+ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
+ax.set(
+    title="Lorenz Curves",
+    xlabel=(
+        "Cumulative proportion of exposure\n(ordered by model from safest to riskiest)"
+    ),
+    ylabel="Cumulative proportion of claim amounts",
+)
+ax.legend(loc="upper left")
+plt.plot()
+plt.show()
