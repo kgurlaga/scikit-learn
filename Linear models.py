@@ -110,3 +110,5 @@ reg.coef_
 reg.intercept_
 
 ### RANSAC: RANdom Sample Consensus
+
+### Huber regressor
