@@ -81,3 +81,94 @@ plt.xlabel("x")
 plt.ylabel("y")
 _ = plt.title("Quantiles of heteroscedastic Normal distributed target")
 plt.show()
+
+
+quantiles = [0.05, 0.5, 0.95]
+predictions = {}
+out_bounds_predictions = np.zeros_like(y_true_mean, dtype=np.bool_)
+for quantile in quantiles:
+    qr = QuantileRegressor(quantile=quantile, alpha=0)
+    y_pred = qr.fit(X, y_pareto).predict(X)
+    predictions[quantile] = y_pred
+
+    if quantile == min(quantiles):
+        out_bounds_predictions = np.logical_or(
+            out_bounds_predictions, y_pred >= y_pareto
+        )
+    elif quantile == max(quantiles):
+        out_bounds_predictions = np.logical_or(
+            out_bounds_predictions, y_pred <= y_pareto
+        )
+plt.plot(X, y_true_mean, color="black", linestyle="dashed", label="True mean")
+for quantile, y_pred in predictions.items():
+    plt.plot(X, y_pred, label=f"Quantile: {quantile}")
+plt.scatter(
+    x[out_bounds_predictions],
+    y_pareto[out_bounds_predictions],
+    color="black",
+    marker="+",
+    alpha=0.5,
+    label="Outside interval",
+)
+plt.scatter(
+    x[~out_bounds_predictions],
+    y_pareto[~out_bounds_predictions],
+    color="black",
+    alpha=0.5,
+    label="Inside interval",
+)
+plt.legend()
+plt.xlabel("x")
+plt.ylabel("y")
+_ = plt.tilte("Quantiles of asymmetric Pareto distributed target")
+plt.show()
+
+## Comparing QuantileRegressor and LinearRegression
+####################################################
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+linear_regression = LinearRegression()
+quantile_regression = QuantileRegressor(quantile=0.5, alpha=0)
+
+y_pred_lr = linear_regression.fit(X, y_pareto).predict(X)
+y_pred_qr = quantile_regression.fit(X, y_pareto).predict(X)
+
+print(
+    "Training model (in-sample performance)\n"
+    f"{'model':<20} MAE MSE\n"
+    f"{linear_regression.__class__.__name__:<20} "
+    f"{mean_absolute_error(y_pareto, y_pred_lr):5.3f} "
+    f"{mean_squared_error(y_pareto, y_pred_lr):5.3f}\n"
+    f"{quantile_regression.__class__.__name__:<20} "
+    f"{mean_absolute_error(y_pareto, y_pred_qr):5.3f} "
+    f"{mean_squared_error(y_pareto, y_pred_qr):5.3f}"
+)
+
+####################################################
+from sklearn.model_selection import cross_validate
+
+cv_results_lr = cross_validate(
+    linear_regression,
+    X,
+    y_pareto,
+    cv=3,
+    scoring=["neg_mean_absolute_error", "neg_mean_squared_error"],
+)
+cv_results_qr = cross_validate(
+    quantile_regression,
+    X,
+    y_pareto,
+    cv=3,
+    scoring=["neg_mean_absolute_error", "neg_mean_squared_error"],
+)
+print(
+    "Test error(cross-validated performance)\n"
+    f"{'model':<20} MAE MSE\n"
+    f"{linear_regression.__class__.__name__:<20} "
+    f"{-cv_results_lr['test_neg_mean_absolute_error'].mean():5.3f} "
+    f"{-cv_results_lr['test_neg_mean_squared_error'].mean():5.3f}\n"
+    f"{quantile_regression.__class__.__name__:<20} "
+    f"{-cv_results_qr['test_neg_mean_absolute_error'].mean():5.3f} "
+    f"{-cv_results_qr['test_neg_mean_squared_error'].mean():5.3f}"
+)
