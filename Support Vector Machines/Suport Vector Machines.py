@@ -10,3 +10,24 @@ clf.predict([[2., 2.]])
 clf.support_vectors_
 clf.support_
 clf.n_support_
+
+####################################################
+## MULTI-CLASS CLASSIFICATION
+
+X = [[0], [1], [2], [3]]
+Y = [0, 1, 2, 3]
+clf = svm.SVC(decision_function_shape='ovo')
+clf.fit(X, Y)
+dec = clf.decision_function([[1]])
+dec.shape[1]
+clf.decision_function_shape = "ovr"
+dec = clf.decision_function([[1]])
+dec.shape[1]
+
+lin_clf = svm.LinearSVC()
+lin_clf.fit(X, Y)
+dec = lin_clf.decision_function([[1]])
+dec.shape[1]
+
+####################################################
+## SCORES AND PROBABILITIES
