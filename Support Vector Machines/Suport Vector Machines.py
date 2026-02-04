@@ -34,3 +34,12 @@ dec.shape[1]
 
 ####################################################
 ## UNBALANCED
+
+####################################################
+## REGRESSION
+from sklearn import svm
+X = [[0, 0], [2, 2]]
+y = [0.5, 2.5]
+regr = svm.SVR()
+regr.fit(X, y)
+regr.predict([[1, 1]])
