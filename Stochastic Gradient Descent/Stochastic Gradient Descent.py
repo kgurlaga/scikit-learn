@@ -12,3 +12,5 @@ clf.decision_function([[2., 2.]])
 
 clf = SGDClassifier(loss="log_loss", max_iter=5).fit(X, y)
 clf.predict_proba([[1., 1.]])
+
+# 1.5.2 Regression
