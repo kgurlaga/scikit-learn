@@ -16,3 +16,5 @@ clf.predict_proba([[1., 1.]])
 # 1.5.2 Regression
 
 # 1.5.3 Online One-Class SVM
+
+# 1.5.4 Stochastic Gradient Descent for sparse data
