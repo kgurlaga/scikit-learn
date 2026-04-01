@@ -35,5 +35,4 @@ from sklearn.pipeline import make_pipeline
 est = make_pipeline(StandardScaler(), SGDClassifier())
 est.fit(X_train)
 est.predict(X_test)
-
 # 1.5.8 Mathematical formulation
