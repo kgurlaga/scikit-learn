@@ -26,9 +26,9 @@ clf.predict_proba([[1., 1.]])
 # 1.5.7 Tips and practical use
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
-scaler.fit(X_train)
-X_train = scaler.transform(X_train)
-X_test = scaler.transform(X_test) # apply same transformation to test data
+scaler.fit(X_train) # type: ignore
+X_train = scaler.transform(X_train) # pyright: ignore[reportUndefinedVariable]
+X_test = scaler.transform(X_test) # pyright: ignore[reportUndefinedVariable] # apply same transformation to test data
 
 # or better yet: use a pipeline!
 from sklearn.pipeline import make_pipeline
