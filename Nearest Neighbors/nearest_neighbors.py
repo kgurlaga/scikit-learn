@@ -21,3 +21,4 @@ KDTree.valid_metrics
 BallTree.valid_metrics
 
 ## 1.6.2. Nearest Neighbors Classification
+## 1.6.3. Nearest Neighbors Regression
