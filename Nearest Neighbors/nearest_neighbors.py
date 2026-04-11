@@ -22,3 +22,18 @@ BallTree.valid_metrics
 
 ## 1.6.2. Nearest Neighbors Classification
 ## 1.6.3. Nearest Neighbors Regression
+## 1.6.4. Nearest Neighbor Algorithms
+# 1.6.4.1. Brute Force
+# 1.6.4.2. K-D Tree
+# 1.6.4.3. Ball Tree
+
+## 1.6.5. Nearest Centroid Classifier
+from sklearn.neighbors import NearestCentroid
+import numpy as np
+X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+y = np.array([1, 1, 1, 2, 2, 2])
+clf = NearestCentroid()
+clf.fit(X, y)
+print(clf.predict([[-0.8, -1]]))
+
+# 1.6.5.1. Nearest Shrunken Centroid
