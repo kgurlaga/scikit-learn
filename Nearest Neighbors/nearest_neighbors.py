@@ -37,3 +37,19 @@ clf.fit(X, y)
 print(clf.predict([[-0.8, -1]]))
 
 # 1.6.5.1. Nearest Shrunken Centroid
+
+## 1.6.6. Nearest Neighbors Transformer
+import tempfile
+from sklearn.manifold import Isomap
+from sklearn.neighbors import KNeighborsTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.datasets import make_regression
+
+cache_path = tempfile.gettempdir()
+X, _ = make_regression(n_samples=50, n_features=25, random_state=0)
+estimator = make_pipeline(
+    KNeighborsTransformer(mode='distance'),
+    Isomap(n_components=3, metric='precomputed'),
+    memory=cache_path)
+X_embedded = estimator.fit_transform(X)
+X_embedded.shape
