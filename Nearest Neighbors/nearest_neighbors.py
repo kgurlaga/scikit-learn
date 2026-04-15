@@ -53,3 +53,5 @@ estimator = make_pipeline(
     memory=cache_path)
 X_embedded = estimator.fit_transform(X)
 X_embedded.shape
+
+## 1.6.7. Neighborhood Components Analysis
