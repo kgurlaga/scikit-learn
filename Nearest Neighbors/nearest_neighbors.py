@@ -69,3 +69,5 @@ knn = KNeighborsClassifier(n_neighbors=3)
 nca_pipe = Pipeline([('nca', nca), ('knn', knn)])
 nca_pipe.fit(X_train, y_train)
 print(nca_pipe.score(X_test, y_test))
+
+# 1.6.7.2. Dimensionality reduction
