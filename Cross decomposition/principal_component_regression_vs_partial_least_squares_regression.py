@@ -54,6 +54,28 @@ from sklearn.preprocessing import StandardScaler
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-pcr = make_pipeline(StandardScaler(), PCA(n_components=1), LinearRegression)
+pcr = make_pipeline(StandardScaler(), PCA(n_components=1), LinearRegression())
 pcr.fit(X_train, y_train)
-pca = pcr.normal_steps["pca"] # retrive the 
+pca = pcr.named_steps["pca"]  # retrieve the PCA step of the pipeline
+
+pls = PLSRegression(n_components=1)
+pls.fit(X_train, y_train)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 3))
+axes[0].scatter(pca.transform(X_test), y_test, alpha=0.3, label="ground truth")
+axes[0].scatter(pca.transform(X_test), pcr.predict(X_test), alpha=0.3, label="predictions")
+axes[0].set(xlabel="Projected data onto first PCA component", ylabel="y", title="PCR / PCA")
+axes[0].legend()
+axes[1].scatter(pls.transform(X_test), y_test, alpha=0.3, label="ground truth")
+axes[1].scatter(pls.transform(X_test), pls.predict(X_test), alpha=0.3, label="predictions")
+axes[1].set(xlabel="Projected data onto first PLS component", ylabel="y", title="PLS")
+axes[1].legend()
+plt.tight_layout()
+plt.show()
+
+print(f"PCR r-squared {pcr.score(X_test, y_test):.3f}")
+print(f"PLS r-squared {pls.score(X_test, y_test):.3f}")
+
+pca_2 = make_pipeline(PCA(n_components=2), LinearRegression())
+pca_2.fit(X_train, y_train)
+print(f"PCR r-squared with 2 components {pca_2.score(X_test, y_test):.3f}")
