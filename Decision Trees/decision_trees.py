@@ -24,3 +24,5 @@ y = [0.5, 2.5]
 clf = tree.DecisionTreeRegressor()
 clf = clf.fit(X, y)
 clf.predict([[1, 1]])
+
+## 1.10.3. Multi-output problems
