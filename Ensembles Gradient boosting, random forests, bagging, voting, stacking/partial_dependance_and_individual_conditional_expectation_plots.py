@@ -67,3 +67,89 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
     ax.set_xlim(0, len(xticklabels))
     ax.legend(loc=2)
 plt.show()
+
+## Preprocessor for machine-learning models
+
+# Preprocessor for the neural network model
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
+
+mlp_preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", QuantileTransformer(n_quantiles=100), numerical_features),
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_features),
+    ]
+)
+mlp_preprocessor
+
+# Preprocessor for the gradient boosting model
+from sklearn.preprocessing import OrdinalEncoder
+hgbdt_preprocessor = ColumnTransformer(
+    transformers=[
+        ("cat", OrdinalEncoder(), categorical_features),
+        ("num", "passthrough", numerical_features),
+    ],
+    sparse_threshold=1,
+    verbose_feature_names_out=False,
+).set_output(transform="pandas")
+hgbdt_preprocessor
+
+## 1-way partial dependance with different models
+# Multi-layer perceptron
+from time import time
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import make_pipeline
+
+print("Training MLPRegressor...")
+tic = time()
+mlp_model = make_pipeline(
+    mlp_preprocessor,
+    MLPRegressor(
+        hidden_layer_sizes=(30, 15),
+        learning_rate_init=0.01,
+        early_stopping=True,
+        random_state=0,
+    ),
+)
+mlp_model.fit(X_train, y_train)
+print(f"done in {time() - tic:.3f}s")
+print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
+
+import matplotlib.pyplot as plt
+from sklearn.inspection import PartialDependenceDisplay
+
+common_params = {
+    "subsample": 50,
+    "n_jobs": 2,
+    "grid_resolution": 20,
+    "random_state": 0,
+}
+print("Computing partial dependence plots ...")
+features_info = {
+    # features of interest
+    "features": ["temp", "humidity", "windspeed", "season", "weather", "hour"],
+
+    # type of partial dependence plot
+    "kind": "average",
+
+    # information regarding categorical features
+    "categorical_features": categorical_features,
+}
+tic = time()
+_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8), constrained_layout=True)
+display = PartialDependenceDisplay.from_estimator(
+    mlp_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rental dataset with an MLPRegressor"
+    ),
+    fontsize=16,
+)
+plt.show()
