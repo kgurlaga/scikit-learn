@@ -153,3 +153,83 @@ _ = display.figure_.suptitle(
     fontsize=16,
 )
 plt.show()
+
+# Gradient boosting
+from sklearn.ensemble import HistGradientBoostingRegressor
+
+print("Training HistGradientBoostingRegressor...")
+tic = time()
+hgbdt_model = make_pipeline(
+    hgbdt_preprocessor,
+    HistGradientBoostingRegressor(
+        categorical_features=categorical_features,
+        random_state=0,
+        max_iter=50,
+    ),
+)
+hgbdt_model.fit(X_train, y_train)
+print(f"done in {time() - tic:.3f}s")
+print(f"Test R2 score: {hgbdt_model.score(X_test, y_test):.2f}")
+
+print("Computing partial dependence plots...")
+tic = time()
+_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8), constrained_layout=True)
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rentals dataset with a gradient boosting"
+    ),
+    fontsize=16,
+)
+plt.show()
+
+## Analysis of the plots
+# ICE vs. PDP
+print("Computing partial dependence plots and individual conditional expectation...")
+tic = time()
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
+features_info = {
+    "features": ["temp", "humidity"],
+    "kind": "both",
+    "centered": True,
+}
+
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
+plt.show()
+
+from sklearn.base import clone
+interaction_cst = [[i] for i in range(X_train.shape[1])]
+hgbdt_model_without_interactions = (
+    clone(hgbdt_model)
+    .set_params(histgradientboostingregressor__interaction_cst=interaction_cst)
+    .fit(X_train, y_train)
+)
+print(f"Test R2 score: {hgbdt_model_without_interactions.score(X_test, y_test):.2f}")
+
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
+features_info["centered"] = False
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model_without_interactions,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+_ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
+plt.show()
