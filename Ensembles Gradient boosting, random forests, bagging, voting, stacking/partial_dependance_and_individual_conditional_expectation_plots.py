@@ -233,3 +233,124 @@ display = PartialDependenceDisplay.from_estimator(
 )
 _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
 plt.show()
+
+## 2D Interaction plots
+print("Computing partial dependence plots ...")
+features_info = {
+    "features": ["temp", "humidity", ("temp", "humidity")],
+    "kind": "average",
+}
+_, ax = plt.subplots(ncols=3, figsize=(10, 4), constrained_layout=True)
+tic = time()
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    "1-way vs 2-way of numerical PDP using gradient boosting", fontsize=16
+)
+plt.show()
+
+print("Computing partial dependence plots...")
+features_info = {
+    "features": ["temp", "humidity", ("temp", "humidity")],
+    "kind": "average",
+}
+_, ax = plt.subplots(ncols=3, figsize=(10, 4), constrained_layout=True)
+tic = time()
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model_without_interactions,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    "1-way vs 2-way of numerical PDP using gradient boosting", fontsize=16
+)
+plt.show()
+
+
+print("Computing partial dependence plots...")
+features_info = {
+    "features": ["season", "weather", ("season", "weather")],
+    "kind": "average",
+    "categorical_features": categorical_features,
+}
+_, ax = plt.subplots(ncols=3, figsize=(14, 6), constrained_layout=True)
+tic = time()
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    "1-way vs 2-way PDP of categorical features using gradient boosting", fontsize=16
+)
+plt.show()
+
+## 3D representation
+import mpl_toolkits.mplot3d
+import numpy as np
+from sklearn.inspection import partial_dependence
+
+fig = plt.figure(figsize=(5.5, 5))
+features = ("temp", "humidity")
+pdp = partial_dependence(
+    hgbdt_model, X_train, features=features, kind="average", grid_resolution=10
+)
+XX, YY = np.meshgrid(pdp["grid_values"][0], pdp["grid_values"][1])
+Z = pdp.average[0].T
+ax = fig.add_subplot(projection="3d")
+fig.add_axes(ax)
+
+surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
+ax.set_xlabel(features[0])
+ax.set_ylabel(features[1])
+fig.suptitle(
+    "PD of number of bike rentals on\nthe temperature and humidity GBDT model",
+    fontsize=16,
+)
+# pretty init view
+ax.view_init(elev=22, azim=122)
+clb = plt.colorbar(surf, pad=0.08, shrink=0.6, aspect=10)
+clb.ax.set_title("Partial\ndependence")
+plt.show()
+
+## Custom inspection points
+print("Computing partial dependence plots with custom evaluation values...")
+tic = time()
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
+
+features_info = {
+    "features": ["temp", "humidity"],
+    "kind": "both",
+}
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+    # we set custom values for temp feature - 
+    # all other features are evaluated based on the data
+    custom_values={"temp": np.linspace(0, 40, 10)},
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    (
+        "Partial dependence of the number of bike rentals\n"
+        "for the bike rental dataset with a gradient boosting"
+    ),
+    fontsize=16,
+)
+plt.show()
