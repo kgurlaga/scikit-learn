@@ -91,3 +91,46 @@ import math
 common_params["max_iter"] = math.ceil(hgbt.n_iter_ / 100) * 100
 common_params["early_stopping"] = False
 hgbt = HistGradientBoostingRegressor(**common_params)
+
+## Support for missing values
+import numpy as np
+from sklearn.metrics import root_mean_squared_error
+
+rng = np.random.RandomState(42)
+first_week = slice(0, 336)  # first week in the test set as 7 * 48 = 336
+missing_fraction_list = [0, 0.01, 0.03]
+
+
+def generate_missing_values(X, missing_fraction):
+    total_cells = X.shape[0] * X.shape[1]
+    num_missing_cells = int(total_cells * missing_fraction)
+    row_indices = rng.choice(X.shape[0], num_missing_cells, replace=True)
+    col_indices = rng.choice(X.shape[1], num_missing_cells, replace=True)
+    X_missing = X.copy()
+    X_missing.iloc[row_indices, col_indices] = np.nan
+    return X_missing
+
+
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(y_test.values[first_week], label="Actual transfer")
+
+for missing_fraction in missing_fraction_list:
+    X_train_missing = generate_missing_values(X_train, missing_fraction)
+    X_test_missing = generate_missing_values(X_test, missing_fraction)
+    hgbt.fit(X_train_missing, y_train)
+    y_pred = hgbt.predict(X_test_missing[first_week])
+    rmse = root_mean_squared_error(y_test[first_week], y_pred)
+    ax.plot(
+        y_pred[first_week],
+        label=f"missing_fraction={missing_fraction}, RMSE={rmse:.3f}",
+        alpha=0.5,
+    )
+ax.set(
+    title="Daily energy transfer predictions on data with MCAR values",
+    xticks=[(i + 0.2) * 48 for i in range(7)],
+    xticklabels=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    xlabel="Time of the week",
+    ylabel="Normalized energy transfer",
+)
+_ = ax.legend(loc="lower right")
+plt.show()
