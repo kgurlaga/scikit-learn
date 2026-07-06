@@ -134,3 +134,109 @@ ax.set(
 )
 _ = ax.legend(loc="lower right")
 plt.show()
+
+## Support for quantile loss
+from sklearn.metrics import mean_pinball_loss
+quantiles = [0.95, 0.05]
+predictions = []
+
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(y_test.values[first_week], label="Actual transfer")
+
+for quantile in quantiles:
+    hgbt_quantile = HistGradientBoostingRegressor(
+        loss="quantile", quantile=quantile, **common_params
+    )
+    hgbt_quantile.fit(X_train, y_train)
+    y_pred = hgbt_quantile.predict(X_test[first_week])
+
+    predictions.append(y_pred)
+    score = mean_pinball_loss(y_test[first_week], y_pred)
+    ax.plot(
+        y_pred[first_week],
+        label=f"quantile={quantile}, pinball loss={score:.2f}",
+        alpha=0.5,
+    )
+
+ax.fill_between(
+    range(len(predictions[0][first_week])),
+    predictions[0][first_week],
+    predictions[1][first_week],
+    color=colors[0],
+    alpha=0.1,
+)
+
+ax.set(
+    title="Daily energy transfer predictions with quantile loss",
+    xticks=[(i + 0.2) * 48 for i in range(7)],
+    xticklabels=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    xlabel="Time of the week",
+    ylabel="Normalized energy transfer",
+)
+_ = ax.legend(loc="lower right")
+plt.show()
+
+## Monotonic constraints
+from sklearn.inspection import PartialDependenceDisplay
+
+monotonic_cst = {
+    "date": 0,
+    "day": 0,
+    "period": 0,
+    "nswdemand": 1,
+    "nswprice": 1,
+    "vicdemand": -1,
+    "vicprice": -1,
+}
+hgbt_no_cst = HistGradientBoostingRegressor(
+    categorical_features=None, random_state=42
+).fit(X, y)
+hgbt_cst = HistGradientBoostingRegressor(
+    monotonic_cst=monotonic_cst, categorical_features=None, random_state=42
+).fit(X, y)
+
+fig, ax = plt.subplots(nrows=2, figsize=(15, 10))
+disp = PartialDependenceDisplay.from_estimator(
+    hgbt_no_cst,
+    X,
+    features=["nswdemand", "nswprice"],
+    line_kw={"linewidth": 2, "label": "unconstrained", "color": "tab:blue"},
+    ax=ax[0],
+)
+PartialDependenceDisplay.from_estimator(
+    hgbt_cst,
+    X,
+    features=["nswdemand", "nswprice"],
+    line_kw={"linewidth": 2, "label": "constrained", "color": "tab:orange"},
+    ax=disp.axes_,
+)
+disp = PartialDependenceDisplay.from_estimator(
+    hgbt_no_cst,
+    X,
+    features=["vicdemand", "vicprice"],
+    line_kw={"linewidth": 2, "label": "unconstrained", "color": "tab:blue"},
+    ax=ax[1],
+)
+PartialDependenceDisplay.from_estimator(
+    hgbt_cst,
+    X,
+    features=["vicdemand", "vicprice"],
+    line_kw={"linewidth": 2, "label": "constrained", "color": "tab:orange"},
+    ax=disp.axes_,
+)
+_ = plt.legend()
+plt.show()
+
+from sklearn.metrics import make_scorer, root_mean_squared_error
+from sklearn.model_selection import TimeSeriesSplit, cross_validate
+
+ts_cv = TimeSeriesSplit(n_splits=5, gap=48, test_size=336) # a week has 336 samples
+scorer = make_scorer(root_mean_squared_error)
+
+cv_results = cross_validate(hgbt_no_cst, X, y, cv=ts_cv, scoring=scorer)
+rmse = cv_results["test_score"]
+print(f"RMSE without constraints = {rmse.mean():3f} +/- {rmse.std():.3f}")
+
+cv_results = cross_validate(hgbt_cst, X, y, cv=ts_cv, scoring=scorer)
+rmse = cv_results["test_score"]
+print(f"RMSE with constraints      = {rmse.mean():.3f} +/- {rmse.std():3f}")
