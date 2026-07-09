@@ -28,3 +28,21 @@ gbdt = HistGradientBoostingClassifier(min_samples_leaf=1,
                                       learning_rate=1,
                                       max_iter=1).fit(X, y)
 gbdt.predict(X)
+
+## 1.11.1.1.3. Sample weight support
+X = [[1, 0],
+     [1, 0],
+     [1, 0],
+     [0, 1]]
+y = [0, 0, 1, 0]
+# ignore the first 2 training samples by setting their weight to 0
+sample_weight = [0, 0, 1, 1]
+gb = HistGradientBoostingClassifier(min_samples_leaf=1)
+gb.fit(X, y, sample_weight=sample_weight)
+gb.predict([[1, 0]])
+gb.predict_proba([[1, 0]])[0, 1]
+
+## 1.11.1.1.4. Castegorical Features Support
+gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
+gbdt = HistGradientBoostingClassifier(categorical_features=[0])
+gbdt = HistGradientBoostingClassifier(categorical_features=["site", "manufacturer"])
