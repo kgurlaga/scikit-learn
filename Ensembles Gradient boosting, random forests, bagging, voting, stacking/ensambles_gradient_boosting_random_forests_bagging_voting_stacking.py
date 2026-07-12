@@ -46,3 +46,15 @@ gb.predict_proba([[1, 0]])[0, 1]
 gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
 gbdt = HistGradientBoostingClassifier(categorical_features=[0])
 gbdt = HistGradientBoostingClassifier(categorical_features=["site", "manufacturer"])
+
+## 1.11.1.1.5. Monotonic Constraints
+from sklearn.ensemble import HistGradientBoostingRegressor
+gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
+
+## 1.11.1.1.6. Intercation constraints
+
+## 1.11.1.1.7. Low-level parallelism
+
+## 1.11.1.1.8. Why it's faster
+
+## 1.11.1.2. GradientBoostingClassifier and GradientBoostingRegressor
