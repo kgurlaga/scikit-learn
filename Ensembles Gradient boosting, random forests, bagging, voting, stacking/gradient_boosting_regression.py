@@ -86,3 +86,32 @@ plt.boxplot(result.importances[sorted_idx].T, vert=False, **tick_labels_dict)
 plt.title("Permutation Importance (test set)")
 fig.tight_layout()
 plt.show()
+
+## 1.11.1.2.1. Fitting additional weak-learners
+import numpy as np
+from sklearn.metrics import mean_squared_error
+from sklearn.datasets import make_friedman1
+from sklearn.ensemble import GradientBoostingRegressor
+
+X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+X_train, X_test = X[:200], X[200:]
+y_train, y_test = y[:200], y[200:]
+est = GradientBoostingRegressor(
+    n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+    loss="squared_error"
+)
+est = est.fit(X_train, y_train) # fit with 100 trees
+mean_squared_error(y_test, est.predict(X_test))
+_ = est.set_params(n_estimators=200, warm_start=True) # set warm_start and increase num of trees
+_ = est.fit(X_train, y_train) # fit additional 100 trees to est
+mean_squared_error(y_test, est.predict(X_test))
+
+## 1.11.1.2.2. Controlling the tree size
+
+## 1.11.1.2.3. Mathematical formulation
+
+## 1.11.1.2.4. Loss Functions
+
+## 1.11.1.2.5. Shrinkage via learning rate
+
+## 1.11.1.2.6. Subsampling
