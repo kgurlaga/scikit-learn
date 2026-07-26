@@ -58,3 +58,73 @@ gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
 ## 1.11.1.1.8. Why it's faster
 
 ## 1.11.1.2. GradientBoostingClassifier and GradientBoostingRegressor
+
+## 1.11.1.2.1. Fitting additional weak-learners
+import numpy as np
+from sklearn.metrics import mean_squared_error
+from sklearn.datasets import make_friedman1
+from sklearn.ensemble import GradientBoostingRegressor
+
+X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+X_train, X_test = X[:200], X[200:]
+y_train, y_test = y[:200], y[200:]
+est = GradientBoostingRegressor(
+    n_estimators=100, learning_rate=0.1, max_depth=1, random_state=0,
+    loss="squared_error"
+)
+est = est.fit(X_train, y_train) # fit with 100 trees
+mean_squared_error(y_test, est.predict(X_test))
+_ = est.set_params(n_estimators=200, warm_start=True) # set warm_start and increase num of trees
+_ = est.fit(X_train, y_train) # fit additional 100 trees to est
+mean_squared_error(y_test, est.predict(X_test))
+
+
+## 1.11.1.2.2. Controlling the tree size
+
+## 1.11.1.2.3. Mathematical formulation
+
+## 1.11.1.2.4. Loss Functions
+
+## 1.11.1.2.5. Shrinkage via learning rate
+
+## 1.11.1.2.6. Subsampling
+
+## 1.11.1.2.7. Interpretation with feature importance
+from sklearn.datasets import make_hastie_10_2
+from sklearn.ensemble import GradientBoostingClassifier
+
+X, y = make_hastie_10_2(random_state=0)
+clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+                                 max_depth=1, random_state=0).fit(X, y)
+clf.feature_importances_
+
+## 1.11.2. Random forests and other randomized tree ensembles
+from sklearn.ensemble import RandomForestClassifier
+X = [[0, 0], [1, 1]]
+Y = [0, 1]
+clf = RandomForestClassifier(n_estimators=10)
+clf = clf.fit(X, Y)
+
+## 1.11.2.1. Random Forests
+
+## 1.11.2.2. Extremely Randomized Trees
+from sklearn.model_selection import cross_val_score
+from sklearn.datasets import make_blobs
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+X, y = make_blobs(n_samples=10000, n_features=10, centers=100, random_state=0)
+
+clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
+                             random_state=0)
+scores = cross_val_score(clf, X, y, cv=5)
+scores.mean()
+
+clf = RandomForestClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0)
+scores = cross_val_score(clf, X, y, cv=5)
+scores.mean()
+
+clf = ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0)
+scores = cross_val_score(clf, X, y, cv=5)
+scores.mean() > 0.999
