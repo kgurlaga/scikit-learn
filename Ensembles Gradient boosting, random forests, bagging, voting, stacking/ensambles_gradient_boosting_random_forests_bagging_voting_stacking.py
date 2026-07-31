@@ -128,3 +128,9 @@ scores.mean()
 clf = ExtraTreesClassifier(n_estimators=10, max_depth=None, min_samples_split=2, random_state=0)
 scores = cross_val_score(clf, X, y, cv=5)
 scores.mean() > 0.999
+
+## 1.11.2.3. Parameters
+
+## 1.11.2.4. Parallelization
+
+## 1.11.2.5. Feature importance evaluation
