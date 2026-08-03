@@ -134,3 +134,5 @@ scores.mean() > 0.999
 ## 1.11.2.4. Parallelization
 
 ## 1.11.2.5. Feature importance evaluation
+
+## 1.11.2.6. Totally Random Trees Embedding
