@@ -136,3 +136,26 @@ scores.mean() > 0.999
 ## 1.11.2.5. Feature importance evaluation
 
 ## 1.11.2.6. Totally Random Trees Embedding
+
+## 1.11.2.7. Fitting additional trees
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+
+X, y = make_classification(n_samples=100, random_state=1)
+clf = RandomForestClassifier(n_estimators=10)
+clf = clf.fit(X, y) # fit with 10 trees
+len(clf.estimators_)
+
+# set warm start and increase num of estimators
+_ = clf.set_params(n_estimators=20, warm_start=True)
+_ = clf.fit(X, y) # fit additional 10 trees
+len(clf.estimators_)
+
+clf = RandomForestClassifier(n_estimators=20)
+_ = clf.fit(X, y)
+
+## 1.11.3. Bagging meta-estimator
+from sklearn.ensemble import BaggingClassifier
+from sklearn.neighbors import KNeighborsClassifier
+bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5, max_features=0.5)
+print(bagging)
