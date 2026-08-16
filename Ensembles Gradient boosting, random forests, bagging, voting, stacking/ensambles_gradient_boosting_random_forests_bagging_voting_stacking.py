@@ -189,3 +189,33 @@ for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random 
     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
 
 ## 1.11.4.3. Weighted Average Probabilities (Soft Voting)
+
+## 1.11.4.4. Usage
+eclf = VotingClassifier(
+    estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+    voting='soft'
+)
+
+eclf = VotingClassifier(
+    estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+    voting='soft', weights=[2, 5, 1]
+)
+
+## 1.11.5. Voting Regressor
+## 1.11.5.1. Usage
+
+from sklearn.datasets import load_diabetes
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import VotingRegressor
+
+# Loading some example data
+X, y = load_diabetes(return_X_y=True)
+
+# Training classifiers
+reg1 = GradientBoostingRegressor(random_state=1)
+reg2 = RandomForestRegressor(random_state=1)
+reg3 = LinearRegression()
+ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
+ereg = ereg.fit(X, y)
