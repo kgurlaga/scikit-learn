@@ -219,3 +219,52 @@ reg2 = RandomForestRegressor(random_state=1)
 reg3 = LinearRegression()
 ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
 ereg = ereg.fit(X, y)
+
+
+## 1.11.6. Stacked generalization
+from sklearn.linear_model import RidgeCV, LassoCV
+from sklearn.neighbors import KNeighborsRegressor
+estimators = [('ridge', RidgeCV()),
+              ('lasso', LassoCV(random_state=42)),
+              ('knr', KNeighborsRegressor(n_neighbors=20, metric='euclidean'))]
+
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import StackingRegressor
+final_estimator = GradientBoostingRegressor(
+    n_estimators=25, subsample=0.5, min_samples_leaf=25, max_features=1,
+    random_state=42)
+reg = StackingRegressor(
+    estimators=estimators,
+    final_estimator=final_estimator)
+
+from sklearn.datasets import load_diabetes
+X, y = load_diabetes(return_X_y=True)
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+reg.fit(X_train, y_train)
+
+y_pred = reg.predict(X_test)
+from sklearn.metrics import r2_score
+print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
+reg.transform(X_test[:5])
+
+
+final_layer_rfr = RandomForestRegressor(
+    n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
+final_layer_gbr = GradientBoostingRegressor(
+    n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
+final_layer = StackingRegressor(
+    estimators=[('rf', final_layer_rfr),
+                ('gbrt', final_layer_gbr)],
+    final_estimator=RidgeCV()
+    )
+multi_layer_regressor = StackingRegressor(
+    estimators=[('ridge', RidgeCV()),
+                ('lasso', LassoCV(random_state=42)),
+                ('knr', KNeighborsRegressor(n_neighbors=20,
+                                            metric='euclidean'))],
+    final_estimator=final_layer
+)
+multi_layer_regressor.fit(X_train, y_train)
+print('R2 score: {:.2f}'
+      .format(multi_layer_regressor.score(X_test, y_test)))
