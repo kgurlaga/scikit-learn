@@ -268,3 +268,16 @@ multi_layer_regressor = StackingRegressor(
 multi_layer_regressor.fit(X_train, y_train)
 print('R2 score: {:.2f}'
       .format(multi_layer_regressor.score(X_test, y_test)))
+
+## 1.11.7. AdaBoost
+
+## 1.11.7.1. Usage
+from sklearn.model_selection import cross_val_score
+from sklearn.datasets import load_iris
+from sklearn.ensemble import AdaBoostClassifier
+
+X, y = load_iris(return_X_y=True)
+clf = AdaBoostClassifier(n_estimators=100)
+scores = cross_val_score(clf, X, y, cv=5)
+scores.mean()
+
