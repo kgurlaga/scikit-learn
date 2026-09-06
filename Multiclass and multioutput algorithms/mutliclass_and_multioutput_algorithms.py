@@ -20,3 +20,20 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import LinearSVC
 X, y = datasets.load_iris(return_X_y=True)
 OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+
+## 1.12.1.3. OneVsOneClassifier
+from sklearn import datasets
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn.svm import LinearSVC
+X, y = datasets.load_iris(return_X_y=True)
+OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
+
+## 1.12.1.4. OutputCodeClassifier
+from sklearn import datasets
+from sklearn.multiclass import OutputCodeClassifier
+from sklearn.svm import LinearSVC
+X, y = datasets.load_iris(return_X_y=True)
+clf = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
+clf.fit(X, y).predict(X)
+
+#
