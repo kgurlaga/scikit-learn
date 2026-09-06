@@ -36,4 +36,16 @@ X, y = datasets.load_iris(return_X_y=True)
 clf = OutputCodeClassifier(LinearSVC(random_state=0), code_size=2, random_state=0)
 clf.fit(X, y).predict(X)
 
-#
+## 1.12.2. Multilabel classification
+## 1.12.2.1. Target format
+import numpy as np
+y = np.array([[1, 0, 0, 1], [0, 0, 1, 1], [0, 0, 0, 0]])
+print(y)
+
+from scipy import sparse
+y_sparse = sparse.csr_array(y)
+print(y_sparse)
+
+## 1.12.2.2. MultiOutputClassifier
+
+## 1.12.2.3. ClassifierChain
