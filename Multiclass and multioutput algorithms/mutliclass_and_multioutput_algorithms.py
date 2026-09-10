@@ -70,3 +70,18 @@ multi_target_forest.fit(X, Y).predict(X)
 ## 1.12.3.1. Target format
 y = np.array([['apple', 'green'], ['orange', 'orange'], ['pear', 'green']])
 print(y)
+
+## 1.12.4. Multioutput regression
+
+## 1.12.4.1. Target format
+y = np.array([[31.4, 94], [40.5, 109], [25.0, 30]])
+print(y)
+
+## 1.12.4.2. MultiOutputRegressor
+from sklearn.datasets import make_regression
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+X, y = make_regression(n_samples=10, n_targets=3, random_state=1)
+MultiOutputRegressor(GradientBoostingRegressor(random_state=0)).fit(X, y).predict(X)
+
+## 1.12.4.3. RegressorChain
