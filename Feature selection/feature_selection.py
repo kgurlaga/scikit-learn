@@ -15,4 +15,7 @@ X_new = SelectKBest(f_classif, k=2).fit_transform(X, y)
 X_new.shape
 
 ## 1.13.3. Recursive feature elimination
+
+## 1.13.4. Feature selection using SelectFromModel
+
     
