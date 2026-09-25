@@ -17,5 +17,13 @@ X_new.shape
 ## 1.13.3. Recursive feature elimination
 
 ## 1.13.4. Feature selection using SelectFromModel
-
-    
+## 1.13.4.1. L1-based feature selection
+from sklearn.svm import LinearSVC
+from sklearn.datasets import load_iris
+from sklearn.feature_selection import SelectFromModel
+X, y = load_iris(return_X_y=True)
+X.shape
+lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X, y)
+model = SelectFromModel(lsvc, prefit=True)
+X_new = model.transform(X)
+X_new.shape
