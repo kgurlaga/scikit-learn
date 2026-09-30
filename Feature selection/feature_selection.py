@@ -28,7 +28,7 @@ model = SelectFromModel(lsvc, prefit=True)
 X_new = model.transform(X)
 X_new.shape
 
-## Tree-based feature selection
+## 1.13.4.2. Tree-based feature selection
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.datasets import load_iris
 from sklearn.feature_selection import SelectFromModel
@@ -41,3 +41,12 @@ clf.feature_importances_
 model = SelectFromModel(clf, prefit=True)
 X_new = model.transform(X)
 X_new.shape
+
+## 1.13.5. Sequential Feature Selection
+
+## 1.13.6. Feature selection as part of a pipeline
+clf = Pipeline([
+    ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
+    ('classification', RandomForestClassifier())
+])
+clf.fit(X, y)
