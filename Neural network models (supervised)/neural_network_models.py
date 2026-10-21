@@ -19,3 +19,8 @@ clf = MLPClassifier(solver="lbfgs", alpha=1e-5, hidden_layer_sizes=(15,), random
 clf.fit(X, y)
 clf.predict([[1., 2.]])
 clf.predict([[0., 0.]])
+
+## 1.17.3. Regression
+
+## 1.17.4. Regularization
+
