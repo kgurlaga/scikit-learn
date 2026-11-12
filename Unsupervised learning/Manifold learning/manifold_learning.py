@@ -8,3 +8,4 @@
 ## 2.2.6. Spectral Embedding
 ## 2.2.7. Local Tangent Space Alignment
 ## 2.2.8. Multi-dimensional Scaling (MDS)
+## 2.2.9. t-distributed Stochastic Neighbor Embedding (t-SNE)
