@@ -4,3 +4,4 @@
 # 2.3.2.1. Low-level parallelism
 # 2.3.2.2. MiniBatch K-Means
 # 2.3.3. Affinity Propagation
+# 2.3.4. Mean Shift
