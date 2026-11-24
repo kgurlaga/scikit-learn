@@ -5,3 +5,4 @@
 # 2.3.2.2. MiniBatch K-Means
 # 2.3.3. Affinity Propagation
 # 2.3.4. Mean Shift
+# 2.3.5. Spectral clustering
